@@ -24,3 +24,6 @@
 
 ## 파일
 `index.html`, `style.css`, `app.js`, `manifest.webmanifest`, `sw.js`, `icons/`, `api/samsung.js`, `vercel.json`
+
+## ☁️ 클라우드 동기화 추가 버전
+`cloud.js` + `supabase/schema.sql`이 추가되었습니다. **Supabase 설정 없이도 기존 로컬 플래너를 그대로 쓸 수 있습니다.** 구글 로그인과 클라우드 데이터 동기화 설정은 [`CLOUD_SETUP.md`](./CLOUD_SETUP.md)를 참고하세요. 기기간 동시 수정은 마지막 저장 우선이므로 먼저 JSON 백업을 해주세요.
