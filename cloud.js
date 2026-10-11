@@ -6,6 +6,11 @@ const URL='https://oqcqezzsxfkldxybiuzp.supabase.co';
 let config={};try{config=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
 let sb, user=null, poll=null, pushTimer=null, initJob=null, updated='', dirty=false, busy=false, paused=false;
 function msg(s){const e=document.querySelector('#cloudStatus');if(e)e.textContent=s}
+const oauthError=(()=>{
+ const q=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,''));
+ const e=q.get('error_description')||h.get('error_description')||q.get('error')||h.get('error');
+ return e?String(e).slice(0,220):'';
+})();
 function alertBar(s){const e=document.querySelector('#toast');if(!e)return alert(s);e.textContent=s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3500)}
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getLocal(){try{return JSON.parse(localStorage.getItem(DATA)||'null')}catch{return null}}
@@ -63,14 +68,23 @@ async function connect(){
      const next=session?.user||null;
      if(next?.id===user?.id)return;
      stop();user=next;updated='';dirty=false;paused=false;
-     if(user)start();else msg('로그인 필요');
+     if(user){msg('☁ 로그인 확인 · 기록 불러오는 중...');start()}
+     else msg(oauthError?'⚠ 로그인 오류: '+oauthError:'로그인 필요');
    });
    const {data,error}=await sb.auth.getSession();if(error)throw error;
-   if(data.session?.user){user=data.session.user;start()}
-   else msg('로그인 필요');
+   if(data.session?.user){
+     if(!user){user=data.session.user;start()}
+   }else if(!user)msg(oauthError?'⚠ 로그인 오류: '+oauthError:'로그인 필요');
  }catch(e){msg('⚠ 연결 오류');alertBar('Supabase 연결 실패: '+e.message)}
 }
-async function login(){if(!sb)return alertBar('연결 설정에서 Publishable 키를 먼저 저장하세요');const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(error)alertBar(error.message)}
+async function login(){
+ if(!sb)return alertBar('연결 설정에서 Publishable 키를 먼저 저장하세요');
+ msg('구글 로그인 페이지로 이동 중...');
+ try{
+   const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+   if(error){msg('⚠ 로그인 요청 실패');alertBar(error.message)}
+ }catch(e){msg('⚠ 로그인 요청 실패');alertBar(e.message)}
+}
 async function logout(){stop();if(sb)await sb.auth.signOut();user=null;msg('로그인 필요');alertBar('로그아웃했어요. 이 기기의 기록은 남아요')}
 function setup(){
  const side=document.querySelector('.side');if(!side)return;
